@@ -1,0 +1,13 @@
+# Django REST API Requirements
+Django>=4.2.0
+djangorestframework>=3.14.0
+django-ratelimit>=4.1.0
+
+# For production deployment
+gunicorn>=21.2.0
+psycopg2-binary>=2.9.9  # PostgreSQL adapter
+redis>=5.0.0  # For caching and rate limiting
+
+# Optional but recommended
+django-cors-headers>=4.3.0  # CORS support
+celery>=5.3.0  # For async task processing
