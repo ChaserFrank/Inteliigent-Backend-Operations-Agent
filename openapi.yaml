@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: IBOA Agent API
+  version: 1.0.0
+  description: Intelligent Backend Operations Agent endpoints for analyzing events,
+    deciding actions, and executing backend operations.
+
+servers:
+  - url: https://gaynell-nonformative-leoma.ngrok-free.dev
+
+paths:
+  /analyze-event/:
+    post:
+      operationId: analyze_event_create
+      summary: Analyze backend event and return action decision
+      tags:
+        - IBOA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeEventRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentDecisionResponse'
+
+  /decide-action/:
+    post:
+      operationId: decide_action_create
+      tags:
+        - decide-action
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecideActionRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentDecisionResponse'
+
+  /execute-action/:
+    post:
+      operationId: execute_action_create
+      tags:
+        - execute-action
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteActionRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentDecisionResponse'
+
+  /health/:
+    get:
+      operationId: health_retrieve
+      tags:
+        - health
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /validate-payload/:
+    post:
+      operationId: validate_payload_create
+      tags:
+        - validate-payload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidatePayloadRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas:
+    AgentDecisionResponse:
+      type: object
+      properties:
+        category:
+          type: string
+        severity:
+          type: string
+        action:
+          type: string
+        priority:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties: {}
+      required:
+        - category
+        - severity
+        - action
+        - priority
+        - metadata
+
+    AnalyzeEventRequest:
+      type: object
+      properties:
+        error_type:
+          type: string
+        message:
+          type: string
+        stack_trace:
+          type: string
+        context:
+          type: object
+          additionalProperties: {}
+      required:
+        - error_type
+        - message
+
+    DecideActionRequest:
+      type: object
+      properties:
+        category:
+          type: string
+        severity:
+          type: string
+        context:
+          type: object
+          additionalProperties: {}
+      required:
+        - category
+        - severity
+
+    ExecuteActionRequest:
+      type: object
+      properties:
+        action:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: {}
+      required:
+        - action
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ValidatePayloadRequest:
+      type: object
+      properties:
+        payload:
+          type: object
+          additionalProperties: {}
+      required:
+        - payload

@@ -3,9 +3,10 @@ URL Configuration for AI Agent API
 ===================================
 Maps endpoints to view functions.
 """
-
-from django.urls import path
+from django.contrib import admin
+from django.urls import path, include
 from . import views
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 app_name = 'agent'
 

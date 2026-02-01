@@ -5,7 +5,16 @@ Exposes agent service functions over HTTP endpoints.
 Hackathon-ready and minimal implementation.
 """
 
-from rest_framework import status
+from rest_framework import status, serializers
+from drf_spectacular.utils import extend_schema
+from .serializers import (
+    AnalyzeEventRequestSerializer,
+    AgentDecisionResponseSerializer,
+    DecideActionRequestSerializer,
+    ExecuteActionRequestSerializer,
+    ValidatePayloadRequestSerializer,
+    HealthResponseSerializer,
+)
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer, CharField, JSONField, IntegerField, ChoiceField
@@ -385,3 +394,28 @@ def health_check(request):
             '/agent/health/'
         ]
     }, status=status.HTTP_200_OK)
+
+@extend_schema(
+    request=AnalyzeEventRequestSerializer,
+    responses=AgentDecisionResponseSerializer,
+    tags=["IBOA"],
+    summary="Analyze backend event and return action decision",
+)
+@api_view(["POST"])
+def analyze_event(request):
+    ...
+@extend_schema(request=DecideActionRequestSerializer, responses=AgentDecisionResponseSerializer)
+@api_view(["POST"])
+def decide_action(request): ...
+
+@extend_schema(request=ExecuteActionRequestSerializer, responses=AgentDecisionResponseSerializer)
+@api_view(["POST"])
+def execute_action(request): ...
+
+@extend_schema(responses=HealthResponseSerializer)
+@api_view(["GET"])
+def health_check(request): ...
+
+@extend_schema(request=ValidatePayloadRequestSerializer, responses={"200": {"type": "object"}})
+@api_view(["POST"])
+def validate_payload(request): ...
