@@ -1,303 +1,415 @@
-# Django AI Agent Exception Middleware
+# IBOA - Intelligent Backend Operations Agent
 
-A production-ready Django middleware that automatically captures unhandled exceptions and sends them to an external AI agent service for intelligent error analysis and orchestration.
+A Django REST API service that provides AI-powered backend operations for analyzing events, making intelligent decisions, and executing automated actions. Built for integration with IBM watsonx AI models.
 
-## Features
+## 🎯 Overview
 
-✅ **Automatic Exception Capture** - Catches all unhandled 500 errors  
-✅ **Structured Context Collection** - Request path, method, user info, stack traces  
-✅ **AI Agent Integration** - Sends data to external AI service (Anthropic Claude, OpenAI, etc.)  
-✅ **Production-Safe** - Works with `DEBUG = False`, never breaks your app  
-✅ **Async Support** - Non-blocking background processing option  
-✅ **Zero Configuration Required** - Works out of the box with sensible defaults  
-✅ **Comprehensive Logging** - Local logging even if AI service is down  
+IBOA is an intelligent agent system that processes backend events (errors, exceptions, system events) and automatically determines appropriate actions through AI-powered analysis. The system uses two specialized agents:
 
-## Quick Start
+- **Analysis Agent**: Classifies events and determines severity levels
+- **Orchestrator Agent**: Coordinates event processing and decides on actions
 
-### 1. Install Dependencies
+## ✨ Features
+
+✅ **Event Analysis** - Intelligent classification of errors and events  
+✅ **Automated Decision Making** - AI-powered action recommendations  
+✅ **Action Execution** - Automated backend operations based on decisions  
+✅ **Payload Validation** - Schema-based validation for incoming data  
+✅ **IBM watsonx Integration** - Ready for watsonx.ai model integration  
+✅ **RESTful API** - Clean, documented endpoints with OpenAPI/Swagger  
+✅ **Production Ready** - Rate limiting, error handling, and logging  
+
+## 🚀 Quick Start
+
+### 1. Prerequisites
+
+- Python 3.8+
+- pip
+- Virtual environment (recommended)
+
+### 2. Installation
 
 ```bash
-pip install Django>=4.2 requests>=2.31.0 python-dotenv
+# Clone the repository
+git clone <repository-url>
+cd IBOA
+
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Copy environment variables
+cp .env.example .env
+# Edit .env with your configuration
+
+# Run migrations
+python manage.py migrate
+
+# Start the development server
+python manage.py runserver
 ```
 
-### 2. Copy Files to Your Project
+### 3. Verify Installation
 
+Visit `http://localhost:8000/agent/health/` to check if the service is running.
+
+## 📚 API Endpoints
+
+### Core Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/agent/analyze-event/` | POST | Analyze an event and get classification |
+| `/agent/decide-action/` | POST | Decide what action to take for an event |
+| `/agent/execute-action/` | POST | Execute a backend action |
+| `/agent/validate-payload/` | POST | Validate incoming payload against schema |
+| `/agent/health/` | GET | Health check endpoint |
+
+### API Documentation
+
+- **Swagger UI**: `http://localhost:8000/api/schema/swagger-ui/`
+- **OpenAPI Schema**: `http://localhost:8000/api/schema/`
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create a `.env` file based on `.env.example`:
+
+```bash
+# Django Settings
+SECRET_KEY=your-secret-key-here
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Database (optional - defaults to SQLite)
+DB_NAME=iboa_db
+DB_USER=postgres
+DB_PASSWORD=your-password
+DB_HOST=localhost
+DB_PORT=5432
+
+# IBM watsonx Configuration (optional)
+WATSONX_API_KEY=your-watsonx-api-key
+WATSONX_PROJECT_ID=your-project-id
+WATSONX_URL=https://us-south.ml.cloud.ibm.com
+WATSONX_MODEL_ID=ibm/granite-13b-chat-v2
 ```
-your_django_project/
-├── config/
-│   └── middleware/
-│       ├── __init__.py
-│       └── exception_middleware.py  ← Copy this file here
-```
 
-### 3. Configure Settings
+### Django Settings
 
-Add to your `settings.py`:
+Key settings in [`iboa_server/settings.py`](iboa_server/settings.py):
 
 ```python
-# Add middleware (must be LAST in the list)
-MIDDLEWARE = [
-    # ... other middleware ...
-    'config.middleware.exception_middleware.AsyncAIAgentExceptionMiddleware',
+INSTALLED_APPS = [
+    # ...
+    'rest_framework',
+    'agents',
+    'drf_spectacular',  # OpenAPI documentation
 ]
 
-# Configure AI agent service
-AI_AGENT_ENABLED = True
-AI_AGENT_ENDPOINT = 'http://localhost:8001/api/v1/analyze-error'
-AI_AGENT_API_KEY = 'your-api-key'  # Optional
-AI_AGENT_TIMEOUT = 5
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
 ```
 
-### 4. Set Environment Variables
+## 📖 Usage Examples
 
-Create `.env` file:
+### 1. Analyze an Event
 
 ```bash
-AI_AGENT_ENABLED=true
-AI_AGENT_ENDPOINT=http://localhost:8001/api/v1/analyze-error
-AI_AGENT_API_KEY=your-secret-key
+curl -X POST http://localhost:8000/agent/analyze-event/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "error_type": "ValidationError",
+    "message": "Invalid email format",
+    "stack_trace": "",
+    "context": {"field": "email"}
+  }'
 ```
 
-### 5. Done! 🎉
-
-The middleware now automatically captures and sends all exceptions to your AI agent service.
-
-## Files Included
-
-| File | Description |
-|------|-------------|
-| [`exception_middleware.py`](exception_middleware.py) | Main middleware implementation (283 lines) |
-| [`MIDDLEWARE_SETUP.md`](MIDDLEWARE_SETUP.md) | Complete setup guide with examples |
-| [`example_settings.py`](example_settings.py) | Full Django settings.py example |
-| [`.env.example`](env.example) | Environment variables template |
-| [`README.md`](README.md) | This file |
-
-## How It Works
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Django
-    participant Middleware
-    participant AI Agent
-    
-    Client->>Django: HTTP Request
-    Django->>Django: Exception Occurs
-    Django->>Middleware: process_exception()
-    Middleware->>Middleware: Collect Context
-    Middleware->>AI Agent: POST /analyze-error
-    AI Agent->>AI Agent: Analyze with Claude/GPT
-    AI Agent-->>Middleware: Analysis Result
-    Middleware->>Middleware: Log Locally
-    Django->>Client: 500 Error Response
-```
-
-## Exception Data Format
-
-The middleware sends this JSON structure to your AI agent:
-
+**Response:**
 ```json
 {
-  "timestamp": "2024-01-31T12:00:00.000000",
-  "environment": "production",
-  "request": {
-    "path": "/api/v1/users/",
-    "method": "POST",
-    "content_type": "application/json",
-    "query_params": {},
-    "remote_addr": "192.168.1.100",
-    "user_agent": "Mozilla/5.0..."
-  },
-  "request_body": "{\"username\": \"john\"}",
-  "user": {
-    "authenticated": true,
-    "id": 123,
-    "username": "john_doe",
-    "email": "john@example.com"
-  },
-  "exception": {
-    "type": "ValueError",
-    "message": "Invalid user data",
-    "module": "builtins",
-    "traceback": "Traceback (most recent call last):\n...",
-    "traceback_list": ["  File ...", "  File ..."]
-  },
-  "server": {
-    "hostname": "web-server-01",
-    "version": "1.0.0"
+  "category": "validation_error",
+  "severity": "low",
+  "action": "return_validation_error",
+  "priority": 4,
+  "metadata": {
+    "user_facing": true,
+    "severity": "low",
+    "analysis": "Detected validation-related keywords"
   }
 }
 ```
 
-## Configuration Options
+### 2. Decide Action
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `AI_AGENT_ENABLED` | `True` | Enable/disable AI agent integration |
-| `AI_AGENT_ENDPOINT` | Required | URL of your AI agent service |
-| `AI_AGENT_API_KEY` | `None` | API key for authentication (optional) |
-| `AI_AGENT_TIMEOUT` | `5` | Request timeout in seconds |
-| `AI_AGENT_MAX_BODY_SIZE` | `10000` | Max request body size to send (bytes) |
-| `HOSTNAME` | `'unknown'` | Server identifier |
-| `VERSION` | `'1.0.0'` | Application version |
-
-## Middleware Variants
-
-### Synchronous (Simple)
-```python
-'config.middleware.exception_middleware.AIAgentExceptionMiddleware'
-```
-- Blocks until AI service responds
-- Good for development
-- Simpler to debug
-
-### Asynchronous (Recommended)
-```python
-'config.middleware.exception_middleware.AsyncAIAgentExceptionMiddleware'
-```
-- Non-blocking background processing
-- Better for production
-- No performance impact
-
-## Testing
-
-Create a test endpoint:
-
-```python
-# urls.py
-def test_exception(request):
-    raise ValueError("Test exception for AI agent")
-
-urlpatterns = [
-    path('test-exception/', test_exception),
-]
+```bash
+curl -X POST http://localhost:8000/agent/decide-action/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_type": "security_issue",
+    "severity": "high",
+    "message": "Unauthorized access attempt",
+    "context": {"ip": "192.168.1.100"}
+  }'
 ```
 
-Visit `http://localhost:8000/test-exception/` to trigger an exception.
-
-## Production Checklist
-
-- [ ] Use `AsyncAIAgentExceptionMiddleware` for async processing
-- [ ] Set `AI_AGENT_TIMEOUT` to 3-5 seconds
-- [ ] Configure proper logging (see `example_settings.py`)
-- [ ] Store `AI_AGENT_API_KEY` in environment variables
-- [ ] Monitor middleware performance
-- [ ] Set up alerts for AI service downtime
-- [ ] Review sensitive data in request bodies
-
-## AI Agent Service Example
-
-Your AI agent service should accept POST requests:
-
-```python
-# FastAPI example
-from fastapi import FastAPI
-from pydantic import BaseModel
-
-app = FastAPI()
-
-class ExceptionData(BaseModel):
-    timestamp: str
-    environment: str
-    request: dict
-    user: dict
-    exception: dict
-    server: dict
-
-@app.post("/api/v1/analyze-error")
-async def analyze_error(data: ExceptionData):
-    # Analyze with Claude/GPT
-    analysis = await analyze_with_ai(data)
-    
-    # Store in database
-    await store_exception(data, analysis)
-    
-    # Send alerts if critical
-    if analysis.get('severity') == 'critical':
-        await send_alert(data)
-    
-    return {"status": "received", "analysis": analysis}
+**Response:**
+```json
+{
+  "action": "escalate",
+  "priority": 1,
+  "reason": "Critical event requiring immediate escalation",
+  "metadata": {
+    "event_type": "security_issue",
+    "severity": "high",
+    "requires_immediate_action": true
+  }
+}
 ```
 
-## Troubleshooting
+### 3. Execute Action
 
-### Middleware Not Working
-1. Check middleware is in `MIDDLEWARE` list
-2. Ensure it's placed **LAST** in the list
-3. Verify `AI_AGENT_ENABLED = True`
-4. Check logs for initialization messages
-
-### AI Service Not Receiving Data
-1. Verify `AI_AGENT_ENDPOINT` is correct
-2. Test endpoint: `curl -X POST $AI_AGENT_ENDPOINT`
-3. Check API key if required
-4. Review AI service logs
-
-### Performance Issues
-1. Switch to `AsyncAIAgentExceptionMiddleware`
-2. Reduce `AI_AGENT_TIMEOUT`
-3. Monitor execution time in logs
-
-## Advanced Usage
-
-### With Celery
-
-For high-traffic applications:
-
-```python
-from celery import shared_task
-
-@shared_task
-def send_exception_to_agent(exception_data):
-    requests.post(settings.AI_AGENT_ENDPOINT, json=exception_data)
-
-class CeleryAIAgentExceptionMiddleware(AIAgentExceptionMiddleware):
-    def _send_to_agent_service(self, exception_data):
-        send_exception_to_agent.delay(exception_data)
+```bash
+curl -X POST http://localhost:8000/agent/execute-action/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "notify_admin",
+    "priority": 2,
+    "event_type": "system_error",
+    "severity": "medium",
+    "message": "Database connection timeout",
+    "context": {"database": "postgres"}
+  }'
 ```
 
-### Custom Context
-
-Extend the middleware to add custom context:
-
-```python
-class CustomAIAgentExceptionMiddleware(AsyncAIAgentExceptionMiddleware):
-    def _collect_exception_context(self, request, exception):
-        context = super()._collect_exception_context(request, exception)
-        
-        # Add custom fields
-        context['custom'] = {
-            'tenant_id': getattr(request, 'tenant_id', None),
-            'feature_flags': get_feature_flags(request),
-        }
-        
-        return context
+**Response:**
+```json
+{
+  "success": true,
+  "action": "notify_admin",
+  "message": "Admin notification sent",
+  "execution_time": "2024-01-31T12:00:00",
+  "details": {
+    "notifications_sent": 1
+  }
+}
 ```
 
-## Security Considerations
+### 4. Validate Payload
 
-⚠️ **Sensitive Data**: Request bodies may contain passwords, tokens, etc.  
-⚠️ **API Keys**: Always use environment variables  
-⚠️ **Rate Limiting**: Implement on AI agent service  
-⚠️ **Data Retention**: Set appropriate retention policies  
+```bash
+curl -X POST http://localhost:8000/agent/validate-payload/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payload": {"username": "john", "email": "john@example.com"},
+    "required_fields": ["username", "email", "password"]
+  }'
+```
 
-## Requirements
+**Response:**
+```json
+{
+  "is_valid": false,
+  "missing_fields": ["password"],
+  "message": "Missing required fields: password"
+}
+```
 
-- Python 3.8+
+## 🏗️ Architecture
+
+```
+IBOA/
+├── agents/                      # Main application
+│   ├── services/               # Core agent services
+│   │   ├── ai_agent_service.py    # Analysis & Orchestrator agents
+│   │   ├── event_router.py        # Event routing logic
+│   │   ├── validation_module.py   # Payload validation
+│   │   └── exception_middleware.py # Exception handling
+│   ├── views.py                # API endpoints
+│   ├── serializers.py          # Request/response serializers
+│   └── urls.py                 # URL routing
+├── iboa_server/                # Django project settings
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── manage.py
+├── requirements.txt
+├── openapi.yaml                # OpenAPI specification
+└── .env.example                # Environment template
+```
+
+## 🤖 Agent System
+
+### Analysis Agent
+
+Classifies events into categories:
+- `validation_error` - Input validation issues
+- `system_error` - System-level errors
+- `security_issue` - Security-related events
+- `ignorable` - Low-priority events
+
+Severity levels: `low`, `medium`, `high`
+
+### Orchestrator Agent
+
+Determines actions based on analysis:
+- `log_only` - Simple logging (priority 5)
+- `return_validation_error` - User-facing validation errors (priority 4)
+- `log_and_monitor` - System monitoring (priority 2-3)
+- `alert_security_team` - Security alerts (priority 1)
+
+## 🔌 IBM watsonx Integration
+
+The system is designed for easy integration with IBM watsonx.ai models. Update [`agents/services/ai_agent_service.py`](agents/services/ai_agent_service.py) to enable AI-powered classification:
+
+```python
+# Initialize with watsonx config
+watsonx_config = {
+    'api_key': 'your-api-key',
+    'project_id': 'your-project-id',
+    'url': 'https://us-south.ml.cloud.ibm.com',
+    'model_id': 'ibm/granite-13b-chat-v2'
+}
+
+service = AIAgentService(watsonx_config)
+```
+
+Currently uses rule-based classification as fallback. See code comments for watsonx integration points.
+
+## 🧪 Testing
+
+```bash
+# Run Django tests
+python manage.py test
+
+# Test specific app
+python manage.py test agents
+
+# Test with coverage
+pip install coverage
+coverage run --source='.' manage.py test
+coverage report
+```
+
+## 📦 Deployment
+
+### Production Checklist
+
+- [ ] Set `DEBUG=False` in settings
+- [ ] Configure proper `SECRET_KEY`
+- [ ] Set up PostgreSQL database
+- [ ] Configure `ALLOWED_HOSTS`
+- [ ] Set up Redis for caching
+- [ ] Enable rate limiting
+- [ ] Configure CORS if needed
+- [ ] Set up logging
+- [ ] Use gunicorn for WSGI server
+- [ ] Set up reverse proxy (nginx)
+- [ ] Configure SSL/TLS
+
+### Using Gunicorn
+
+```bash
+# Install gunicorn
+pip install gunicorn
+
+# Run with gunicorn
+gunicorn iboa_server.wsgi:application --bind 0.0.0.0:8000 --workers 4
+```
+
+### Docker Deployment
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+RUN python manage.py collectstatic --noinput
+
+CMD ["gunicorn", "iboa_server.wsgi:application", "--bind", "0.0.0.0:8000"]
+```
+
+## 🔒 Security Considerations
+
+⚠️ **Important Security Notes:**
+- Always use environment variables for sensitive data
+- Never commit `.env` file to version control
+- Use strong `SECRET_KEY` in production
+- Enable HTTPS in production
+- Implement rate limiting for public endpoints
+- Validate and sanitize all inputs
+- Review payload data for sensitive information
+
+## 📊 Event Categories & Actions
+
+| Category | Severity | Default Action | Priority |
+|----------|----------|----------------|----------|
+| Security Issue | High | Alert Security Team | 1 |
+| System Error | Medium/High | Log and Monitor | 2-3 |
+| Validation Error | Low | Return to User | 4 |
+| Ignorable | Low | Log Only | 5 |
+
+## 🛠️ Development
+
+### Adding New Endpoints
+
+1. Define serializer in [`agents/serializers.py`](agents/serializers.py)
+2. Create view in [`agents/views.py`](agents/views.py)
+3. Add URL pattern in [`agents/urls.py`](agents/urls.py)
+4. Update OpenAPI schema if needed
+
+### Extending Agent Logic
+
+Modify [`agents/services/ai_agent_service.py`](agents/services/ai_agent_service.py):
+- Add new event categories to `EventCategory` enum
+- Extend classification logic in `AnalysisAgent`
+- Add action types in `OrchestratorAgent`
+
+## 📝 Requirements
+
+See [`requirements.txt`](requirements.txt) for full dependency list:
+
 - Django 4.2+
-- requests 2.31.0+
-- python-dotenv (optional)
+- Django REST Framework 3.14+
+- drf-spectacular (OpenAPI documentation)
+- django-ratelimit (rate limiting)
+- gunicorn (production server)
+- psycopg2-binary (PostgreSQL)
+- redis (caching)
+- celery (async tasks)
 
-## License
+## 🤝 Contributing
 
-This middleware is provided as-is for use in your Django projects.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
-## Support
+## 📄 License
 
-For detailed setup instructions, see [`MIDDLEWARE_SETUP.md`](MIDDLEWARE_SETUP.md)
+This project is provided as-is for use in your applications.
 
-For complete settings example, see [`example_settings.py`](example_settings.py)
+## 🆘 Support
+
+For issues and questions:
+- Check the API documentation at `/api/schema/swagger-ui/`
+- Review the code documentation in source files
+- Test endpoints using the health check endpoint
+
+## 🎉 Acknowledgments
+
+Built for hackathons, ready for production. Designed for easy integration with IBM watsonx.ai.
 
 ---
 
-**Built for hackathons, ready for production** 🚀
+**IBOA - Intelligent Backend Operations Agent** 🤖
