@@ -1,13 +1,49 @@
+# ============================================================================
+# IBOA - Intelligent Backend Operations Agent
 # Django REST API Requirements
-Django>=4.2.0
+# ============================================================================
+
+# Core Django Framework
+Django>=4.2.0,<5.0
 djangorestframework>=3.14.0
-django-ratelimit>=4.1.0
 
-# For production deployment
-gunicorn>=21.2.0
-psycopg2-binary>=2.9.9  # PostgreSQL adapter
-redis>=5.0.0  # For caching and rate limiting
+# API Documentation
+drf-spectacular>=0.27.0  # OpenAPI 3.0 schema generation and Swagger UI
 
-# Optional but recommended
-django-cors-headers>=4.3.0  # CORS support
-celery>=5.3.0  # For async task processing
+# Security & Rate Limiting
+django-ratelimit>=4.1.0  # API rate limiting
+
+# Production Server
+gunicorn>=21.2.0  # WSGI HTTP server for production
+
+# Database
+psycopg2-binary>=2.9.9  # PostgreSQL adapter (optional, SQLite is default)
+
+# Caching & Task Queue
+redis>=5.0.0  # Redis client for caching and rate limiting
+celery>=5.3.0  # Distributed task queue (optional)
+
+# CORS Support
+django-cors-headers>=4.3.0  # Cross-Origin Resource Sharing
+
+# Environment Variables
+python-dotenv>=1.0.0  # Load environment variables from .env file
+
+# HTTP Requests (for external API calls)
+requests>=2.31.0  # HTTP library for AI service integration
+
+# IBM watsonx Integration (optional - uncomment when ready)
+# ibm-watsonx-ai>=0.2.0  # IBM watsonx.ai SDK for AI model integration
+# ibm-cloud-sdk-core>=3.16.0  # IBM Cloud SDK core
+
+# Development & Testing (optional)
+# pytest>=7.4.0
+# pytest-django>=4.5.0
+# coverage>=7.3.0
+# black>=23.0.0  # Code formatter
+# flake8>=6.1.0  # Linter
+# isort>=5.12.0  # Import sorter
+
+# Monitoring & Logging (optional)
+# sentry-sdk>=1.38.0  # Error tracking
+# django-debug-toolbar>=4.2.0  # Development debugging
